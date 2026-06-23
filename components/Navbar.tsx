@@ -16,7 +16,7 @@ export default function Navbar() {
 
     getUser();
 
-    // listen for login/logout changes
+    
     const { data: listener } = supabase.auth.onAuthStateChange(
       () => {
         getUser();
@@ -30,13 +30,12 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = "/"; // refresh UI
+    window.location.href = "/"; 
   };
 
   return (
     <nav className="bg-white shadow-md px-6 py-4 flex justify-between items-center">
       
-      {/* LEFT */}
       <div className="flex gap-6">
         <Link href="/" className="font-bold">
           Internship Tracker
@@ -49,7 +48,7 @@ export default function Navbar() {
      )}
       </div>
 
-      {/* RIGHT */}
+      
       <div className="flex gap-3 items-center">
         {user ? (
           <>
