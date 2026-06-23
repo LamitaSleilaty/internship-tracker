@@ -51,7 +51,7 @@ export default function AuthPage() {
         return;
       }
 
-      // Email confirmation disabled — session is returned immediately
+      
       if (data?.session) {
         router.push("/dashboard");
         return;
