@@ -62,19 +62,7 @@ export default function Navbar() {
           </>
         ) : (
           <>
-            <Link
-              href="/auth/login"
-              className="px-4 py-2 text-sm border rounded"
-            >
-              Login
-            </Link>
-
-            <Link
-              href="/auth/signup"
-              className="px-4 py-2 text-sm bg-black text-white rounded"
-            >
-              Sign up
-            </Link>
+            <Link href="/auth">Login / Sign Up</Link>
           </>
         )}
       </div>

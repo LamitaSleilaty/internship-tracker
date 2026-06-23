@@ -50,7 +50,7 @@ export default function InternshipsPage() {
         </h1>
 
         <Link
-          href="/auth/login"
+          href="/auth"
           className="bg-black text-white px-5 py-2 rounded"
         >
           Login
@@ -61,7 +61,7 @@ export default function InternshipsPage() {
 
   return (
     <div className="max-w-5xl mx-auto py-8">
-      {/* HEADER */}
+   
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Internships</h1>
 
@@ -73,7 +73,6 @@ export default function InternshipsPage() {
         </Link>
       </div>
 
-      {/* LIST */}
       <div className="space-y-4">
         {internships.length === 0 ? (
           <p className="text-gray-500">No internships yet.</p>
@@ -83,7 +82,7 @@ export default function InternshipsPage() {
               key={item.id}
               className="bg-white border rounded-xl p-5 flex justify-between items-start shadow-sm hover:shadow-md transition"
             >
-              {/* LEFT SIDE */}
+              
               <div className="space-y-1">
                 <h2 className="text-xl font-semibold">
                   {item.company}
@@ -97,7 +96,7 @@ export default function InternshipsPage() {
                   {item.location}
                 </p>
 
-                {/* STATUS BADGE */}
+                
                 <span
                   className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-full ${
                     item.status === "applied"
@@ -111,12 +110,20 @@ export default function InternshipsPage() {
                 >
                   {item.status}
                 </span>
+                {item.cv_url && (
+                 <a
+                 href={item.cv_url}
+                  target="_blank"
+           className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition"
+            >
+             📄 View CV
+                  </a>
+)}
               </div>
 
-              {/* RIGHT SIDE ACTIONS */}
+              
               <div className="flex flex-col gap-2 items-end">
                 
-                {/* UPDATE */}
                 <form
                   action={updateInternshipStatus}
                   className="flex gap-2 items-center"
@@ -143,7 +150,7 @@ export default function InternshipsPage() {
                   </button>
                 </form>
 
-                {/* DELETE */}
+                
                 <form action={deleteInternship.bind(null, item.id)}>
                   <button className="text-red-500 text-sm hover:underline">
                     Delete

@@ -6,26 +6,27 @@ import { supabase } from "@/lib/supabase";
 /* -------------------------
    ADD INTERNSHIP
 --------------------------*/
-export async function addInternship(formData: FormData) {
-  const company = formData.get("company") as string;
-  const position = formData.get("position") as string;
-  const location = formData.get("location") as string;
-  const status = formData.get("status") as string;
-  const user_id = formData.get("user_id") as string;
+export async function addInternship(data: any) {
+  console.log("🔥 addInternship CALLED");
+  console.log("DATA RECEIVED:", data);
 
   const { error } = await supabase.from("internships").insert([
     {
-      company,
-      position,
-      location,
-      status,
-      user_id,
+      company: data.company,
+      position: data.position,
+      location: data.location,
+      status: data.status,
+      user_id: data.user_id,
+      cv_url: data.cv_url || null,
     },
   ]);
 
   if (error) {
-    console.log("INSERT ERROR:", error);
+    console.log("❌ SUPABASE INSERT ERROR:", error);
+    return;
   }
+
+  console.log("✅ INSERT SUCCESS");
 
   revalidatePath("/internships");
   revalidatePath("/dashboard");
