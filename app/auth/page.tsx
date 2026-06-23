@@ -19,7 +19,7 @@ export default function AuthPage() {
     setError("");
 
     if (mode === "login") {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -27,6 +27,11 @@ export default function AuthPage() {
       if (error) {
         setError("Invalid email or password");
         setLoading(false);
+        return;
+      }
+
+      if (data?.user?.email === "admin@email.com") {
+        router.push("/admin");
         return;
       }
 
@@ -47,7 +52,7 @@ export default function AuthPage() {
       }
 
       // Email confirmation disabled — session is returned immediately
-      if (data.session) {
+      if (data?.session) {
         router.push("/dashboard");
         return;
       }

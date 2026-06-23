@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 
 export default function Navbar() {
   const [user, setUser] = useState<any>(null);
+  const isAdmin = user?.email === "admin@email.com";
 
   useEffect(() => {
     const getUser = async () => {
@@ -43,6 +44,9 @@ export default function Navbar() {
 
         <Link href="/dashboard">Dashboard</Link>
         <Link href="/internships">Internships</Link>
+        {isAdmin && (
+        <Link href="/admin">Admin Panel</Link>
+     )}
       </div>
 
       {/* RIGHT */}

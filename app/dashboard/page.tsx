@@ -17,41 +17,62 @@ export default function Dashboard() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) return;
+      const isAdmin = user.email === "admin@email.com";
 
      
-      const { count: total } = await supabase
-        .from("internships")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
+      let totalQuery = supabase
+    .from("internships")
+    .select("*", { count: "exact", head: true });
 
+     if (!isAdmin) {
+      totalQuery = totalQuery.eq("user_id", user.id);
+    }
+
+    const { count: total } = await totalQuery;
       
-      const { count: applied } = await supabase
-        .from("internships")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("status", "applied");
+      let appliedQuery = supabase
+  .from("internships")
+  .select("*", { count: "exact", head: true })
+  .eq("status", "applied");
 
+if (!isAdmin) {
+  appliedQuery = appliedQuery.eq("user_id", user.id);
+}
+
+const { count: applied } = await appliedQuery;
       
-      const { count: interview } = await supabase
-        .from("internships")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("status", "interview");
+   let interviewQuery = supabase
+  .from("internships")
+  .select("*", { count: "exact", head: true })
+  .eq("status", "interview");
 
+if (!isAdmin) {
+  interviewQuery = interviewQuery.eq("user_id", user.id);
+}
+
+const { count: interview } = await interviewQuery;
    
-      const { count: accepted } = await supabase
-        .from("internships")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("status", "accepted");
+      let acceptedQuery = supabase
+  .from("internships")
+  .select("*", { count: "exact", head: true })
+  .eq("status", "accepted");
 
-      
-      const { count: rejected } = await supabase
-        .from("internships")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("status", "rejected");
+if (!isAdmin) {
+  acceptedQuery = acceptedQuery.eq("user_id", user.id);
+}
 
+const { count: accepted } = await acceptedQuery;
+
+let rejectedQuery = supabase
+  .from("internships")
+  .select("*", { count: "exact", head: true })
+  .eq("status", "rejected");
+
+if (!isAdmin) {
+  rejectedQuery = rejectedQuery.eq("user_id", user.id);
+}
+
+const { count: rejected } = await rejectedQuery;
       setStats({
         total: total || 0,
         applied: applied || 0,
