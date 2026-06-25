@@ -32,13 +32,12 @@ async function sendVerificationEmail(email, token) {
     return;
   }
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const { error } = await resend.emails.send({
+  await resend.emails.send({
     from: process.env.RESEND_FROM || "onboarding@resend.dev",
     to: email,
     subject: "Verify your email",
     html: `<p>Click <a href="${link}">here</a> to verify your account.</p><p>Or copy this link: ${link}</p>`,
   });
-  if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
 }
 
 const storage = multer.diskStorage({
