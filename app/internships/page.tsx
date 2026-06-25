@@ -1,20 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { API, authHeaders, getUser } from "@/lib/auth";
 import Link from "next/link";
-import { deleteInternship, updateInternshipStatus } from "@/app/action";
-import { addInternship } from "@/app/action";
 
 export default function InternshipsPage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [internships, setInternships] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    const currentUser = userData.user;
-
+    const currentUser = getUser();
     setUser(currentUser);
 
     if (!currentUser) {
@@ -22,13 +18,8 @@ export default function InternshipsPage() {
       return;
     }
 
-    const { data } = await supabase
-      .from("internships")
-      .select("*")
-      .eq("user_id", currentUser.id)
-      .order("created_at", { ascending: false });
-
-    setInternships(data || []);
+    const res = await fetch(`${API}/internships?mine=true`, { headers: authHeaders() });
+    setInternships(await res.json());
     setLoading(false);
   };
 
@@ -36,23 +27,42 @@ export default function InternshipsPage() {
     load();
   }, []);
 
-  if (loading) {
-    return (
-      <p className="text-center mt-10 text-gray-500">Loading...</p>
+  const handleDelete = async (id: string) => {
+    await fetch(`${API}/internships/${id}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
+    setInternships((prev) => prev.filter((i) => i.id !== id));
+  };
+
+  const handleStatusUpdate = async (
+    e: React.FormEvent<HTMLFormElement>,
+    id: string
+  ) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const status = fd.get("status") as string;
+
+    await fetch(`${API}/internships/${id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ status }),
+    });
+
+    setInternships((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, status } : i))
     );
+  };
+
+  if (loading) {
+    return <p className="text-center mt-10 text-gray-500">Loading...</p>;
   }
 
   if (!user) {
     return (
       <div className="max-w-5xl mx-auto py-10 text-center">
-        <h1 className="text-2xl font-bold mb-4">
-          You are not logged in
-        </h1>
-
-        <Link
-          href="/auth"
-          className="bg-black text-white px-5 py-2 rounded"
-        >
+        <h1 className="text-2xl font-bold mb-4">You are not logged in</h1>
+        <Link href="/auth" className="bg-black text-white px-5 py-2 rounded">
           Login
         </Link>
       </div>
@@ -61,10 +71,8 @@ export default function InternshipsPage() {
 
   return (
     <div className="max-w-5xl mx-auto py-8">
-   
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Internships</h1>
-
         <Link
           href="/internships/new"
           className="bg-black text-white px-5 py-2 rounded-lg hover:bg-gray-800 transition"
@@ -82,21 +90,11 @@ export default function InternshipsPage() {
               key={item.id}
               className="bg-white border rounded-xl p-5 flex justify-between items-start shadow-sm hover:shadow-md transition"
             >
-              
               <div className="space-y-1">
-                <h2 className="text-xl font-semibold">
-                  {item.company}
-                </h2>
+                <h2 className="text-xl font-semibold">{item.company}</h2>
+                <p className="text-gray-600">{item.position}</p>
+                <p className="text-gray-400 text-sm">{item.location}</p>
 
-                <p className="text-gray-600">
-                  {item.position}
-                </p>
-
-                <p className="text-gray-400 text-sm">
-                  {item.location}
-                </p>
-
-                
                 <span
                   className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-full ${
                     item.status === "applied"
@@ -110,30 +108,23 @@ export default function InternshipsPage() {
                 >
                   {item.status}
                 </span>
-                {item.cv_url && (
-                 <a
-                 href={item.cv_url}
-                  target="_blank"
-           className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition"
-            >
-             📄 View CV
+
+                {item.cvUrl && (
+                  <a
+                    href={item.cvUrl}
+                    target="_blank"
+                    className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition"
+                  >
+                    View CV
                   </a>
-)}
+                )}
               </div>
 
-              
               <div className="flex flex-col gap-2 items-end">
-                
                 <form
-                  action={updateInternshipStatus}
+                  onSubmit={(e) => handleStatusUpdate(e, item.id)}
                   className="flex gap-2 items-center"
                 >
-                  <input
-                    type="hidden"
-                    name="id"
-                    value={item.id}
-                  />
-
                   <select
                     name="status"
                     defaultValue={item.status}
@@ -144,18 +135,17 @@ export default function InternshipsPage() {
                     <option value="accepted">Accepted</option>
                     <option value="rejected">Rejected</option>
                   </select>
-
                   <button className="text-blue-600 text-sm hover:underline">
                     Update
                   </button>
                 </form>
 
-                
-                <form action={deleteInternship.bind(null, item.id)}>
-                  <button className="text-red-500 text-sm hover:underline">
-                    Delete
-                  </button>
-                </form>
+                <button
+                  onClick={() => handleDelete(item.id)}
+                  className="text-red-500 text-sm hover:underline"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           ))

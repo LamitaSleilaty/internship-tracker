@@ -2,71 +2,44 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { getUser, logout } from "@/lib/auth";
 
 export default function Navbar() {
-  const [user, setUser] = useState<any>(null);
-  const isAdmin = user?.email === "admin@email.com";
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const isAdmin = user?.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "admin@email.com");
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-    };
+    setUser(getUser());
 
-    getUser();
-
-    
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      () => {
-        getUser();
-      }
-    );
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+    const onStorage = () => setUser(getUser());
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/"; 
-  };
 
   return (
     <nav className="bg-white shadow-md px-6 py-4 flex justify-between items-center">
-      
       <div className="flex gap-6">
         <Link href="/" className="font-bold">
           Internship Tracker
         </Link>
-
         <Link href="/dashboard">Dashboard</Link>
         <Link href="/internships">Internships</Link>
-        {isAdmin && (
-        <Link href="/admin">Admin Panel</Link>
-     )}
+        {isAdmin && <Link href="/admin">Admin Panel</Link>}
       </div>
 
-      
       <div className="flex gap-3 items-center">
         {user ? (
           <>
-            <span className="text-sm text-gray-500">
-              {user.email}
-            </span>
-
+            <span className="text-sm text-gray-500">{user.email}</span>
             <button
-              onClick={handleLogout}
+              onClick={logout}
               className="px-4 py-2 text-sm border rounded hover:bg-gray-100"
             >
               Logout
             </button>
           </>
         ) : (
-          <>
-            <Link href="/auth">Login / Sign Up</Link>
-          </>
+          <Link href="/auth">Login / Sign Up</Link>
         )}
       </div>
     </nav>

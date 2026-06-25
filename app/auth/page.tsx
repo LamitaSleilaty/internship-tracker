@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { API, setToken } from "@/lib/auth";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -18,46 +18,33 @@ export default function AuthPage() {
     setLoading(true);
     setError("");
 
-    if (mode === "login") {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    const endpoint = mode === "login" ? "/auth/login" : "/auth/signup";
+    const res = await fetch(`${API}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-      if (error) {
-        setError("Invalid email or password");
-        setLoading(false);
-        return;
-      }
+    const data = await res.json();
 
-      if (data?.user?.email === "admin@email.com") {
-        router.push("/admin");
-        return;
-      }
+    if (!res.ok) {
+      setError(data.error ?? "Something went wrong");
+      setLoading(false);
+      return;
+    }
 
-      router.push("/dashboard");
-    } else {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) {
-        setError(typeof error.message === "string" ? error.message : "Signup failed. Please try again.");
-        setLoading(false);
-        return;
-      }
-
-      
-      if (data?.session) {
-        router.push("/dashboard");
-        return;
-      }
-
+    if (mode === "signup") {
       setEmailSent(true);
+      setLoading(false);
+      return;
+    }
+
+    setToken(data.token);
+
+    if (data.user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "admin@email.com")) {
+      router.push("/admin");
+    } else {
+      router.push("/dashboard");
     }
 
     setLoading(false);
@@ -87,9 +74,7 @@ export default function AuthPage() {
       </h1>
 
       <p className="text-gray-500 text-center mb-6">
-        {mode === "login"
-          ? "Welcome back!"
-          : "Create a new account"}
+        {mode === "login" ? "Welcome back!" : "Create a new account"}
       </p>
 
       <input
@@ -108,40 +93,28 @@ export default function AuthPage() {
         onChange={(e) => setPassword(e.target.value)}
       />
 
-      {error && (
-        <p className="text-red-500 text-sm mb-3">{error}</p>
-      )}
+      {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
 
       <button
         onClick={handleAuth}
         disabled={loading}
         className="bg-black text-white w-full py-2 rounded hover:bg-gray-800"
       >
-        {loading
-          ? "Loading..."
-          : mode === "login"
-          ? "Login"
-          : "Sign Up"}
+        {loading ? "Loading..." : mode === "login" ? "Login" : "Sign Up"}
       </button>
 
       <p className="text-center text-sm mt-4">
         {mode === "login" ? (
           <>
-            Don’t have an account?{" "}
-            <button
-              className="text-blue-600 underline"
-              onClick={() => setMode("signup")}
-            >
+            Don&apos;t have an account?{" "}
+            <button className="text-blue-600 underline" onClick={() => setMode("signup")}>
               Sign up
             </button>
           </>
         ) : (
           <>
             Already have an account?{" "}
-            <button
-              className="text-blue-600 underline"
-              onClick={() => setMode("login")}
-            >
+            <button className="text-blue-600 underline" onClick={() => setMode("login")}>
               Login
             </button>
           </>
