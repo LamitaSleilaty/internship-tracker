@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { API, setToken } from "@/lib/auth";
 
-export default function AuthCallbackPage() {
+function AuthCallback() {
   const router = useRouter();
   const params = useSearchParams();
   const [status, setStatus] = useState<"verifying" | "error">("verifying");
@@ -50,5 +50,18 @@ export default function AuthCallbackPage() {
       <h1 className="text-2xl font-bold mb-2">Verifying your email...</h1>
       <p className="text-gray-500">Please wait.</p>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-md mx-auto mt-20 bg-white p-6 shadow rounded text-center">
+        <h1 className="text-2xl font-bold mb-2">Verifying your email...</h1>
+        <p className="text-gray-500">Please wait.</p>
+      </div>
+    }>
+      <AuthCallback />
+    </Suspense>
   );
 }
