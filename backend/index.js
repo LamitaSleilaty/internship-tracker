@@ -32,21 +32,20 @@ async function sendVerificationEmail(email, token) {
 
     const link = `${FRONTEND_URL}/auth/callback?token=${token}`;
 
-    console.log("🔧 GMAIL_USER:", process.env.GMAIL_USER);
-    console.log("🔧 APP PASSWORD EXISTS:", !!process.env.GMAIL_APP_PASSWORD);
-
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      secure: process.env.SMTP_SECURE === "true",
       auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
     });
 
     console.log("📨 Sending email...");
 
     await transporter.sendMail({
-      from: `"Internship Tracker" <${process.env.GMAIL_USER}>`,
+      from: process.env.SMTP_FROM,
       to: email,
       subject: "Verify your email",
       html: `<a href="${link}">${link}</a>`,
@@ -93,7 +92,7 @@ app.post("/auth/signup", async (req, res) => {
   const verificationToken = crypto.randomBytes(32).toString("hex");
   await prisma.user.create({ data: { email, passwordHash, verificationToken } });
 
-  await sendVerificationEmail(email, verificationToken);
+  sendVerificationEmail(email, verificationToken);
   res.json({ message: "Check your email to verify your account." });
 });
 
