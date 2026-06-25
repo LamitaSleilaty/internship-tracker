@@ -9,7 +9,7 @@ import fs from "fs";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 dotenv.config();
 
@@ -26,18 +26,36 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 async function sendVerificationEmail(email, token) {
-  const link = `${FRONTEND_URL}/auth/callback?token=${token}`;
-  if (!process.env.RESEND_API_KEY) {
-    console.log(`[email verification] verify link for ${email}: ${link}`);
-    return;
+  try {
+    console.log("🔥 EMAIL FUNCTION CALLED");
+    console.log("📧 TO:", email);
+
+    const link = `${FRONTEND_URL}/auth/callback?token=${token}`;
+
+    console.log("🔧 GMAIL_USER:", process.env.GMAIL_USER);
+    console.log("🔧 APP PASSWORD EXISTS:", !!process.env.GMAIL_APP_PASSWORD);
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
+
+    console.log("📨 Sending email...");
+
+    await transporter.sendMail({
+      from: `"Internship Tracker" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: "Verify your email",
+      html: `<a href="${link}">${link}</a>`,
+    });
+
+    console.log("✅ EMAIL SENT SUCCESSFULLY");
+  } catch (err) {
+    console.error("❌ EMAIL ERROR:", err);
   }
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  await resend.emails.send({
-    from: process.env.RESEND_FROM || "onboarding@resend.dev",
-    to: email,
-    subject: "Verify your email",
-    html: `<p>Click <a href="${link}">here</a> to verify your account.</p><p>Or copy this link: ${link}</p>`,
-  });
 }
 
 const storage = multer.diskStorage({
