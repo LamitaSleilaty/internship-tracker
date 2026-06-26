@@ -33,19 +33,20 @@ async function sendVerificationEmail(email, token) {
     const link = `${FRONTEND_URL}/auth/callback?token=${token}`;
 
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
-      secure: process.env.SMTP_SECURE === "true",
+      service: "gmail",
       auth: {
+        type: "OAuth2",
         user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        clientId: process.env.GMAIL_CLIENT_ID,
+        clientSecret: process.env.GMAIL_CLIENT_SECRET,
+        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
       },
     });
 
     console.log("📨 Sending email...");
 
     await transporter.sendMail({
-      from: process.env.SMTP_FROM,
+      from: `"Internship Tracker" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Verify your email",
       html: `<a href="${link}">${link}</a>`,
