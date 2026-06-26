@@ -9,7 +9,7 @@ import fs from "fs";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
+import { google } from "googleapis";
 
 dotenv.config();
 
@@ -32,24 +32,33 @@ async function sendVerificationEmail(email, token) {
 
     const link = `${FRONTEND_URL}/auth/callback?token=${token}`;
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.SMTP_USER,
-        clientId: process.env.GMAIL_CLIENT_ID,
-        clientSecret: process.env.GMAIL_CLIENT_SECRET,
-        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-      },
-    });
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GMAIL_CLIENT_ID,
+      process.env.GMAIL_CLIENT_SECRET,
+      "https://developers.google.com/oauthplayground"
+    );
+
+    oauth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
+
+    const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+    const message = [
+      `From: "Internship Tracker" <${process.env.SMTP_USER}>`,
+      `To: ${email}`,
+      `Subject: Verify your email`,
+      `MIME-Version: 1.0`,
+      `Content-Type: text/html; charset=utf-8`,
+      ``,
+      `<a href="${link}">Click here to verify your email</a>`,
+    ].join("\n");
+
+    const encoded = Buffer.from(message).toString("base64url");
 
     console.log("📨 Sending email...");
 
-    await transporter.sendMail({
-      from: `"Internship Tracker" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: "Verify your email",
-      html: `<a href="${link}">${link}</a>`,
+    await gmail.users.messages.send({
+      userId: "me",
+      requestBody: { raw: encoded },
     });
 
     console.log("✅ EMAIL SENT SUCCESSFULLY");
